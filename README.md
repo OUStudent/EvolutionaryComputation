@@ -41,7 +41,7 @@ which is the main component of classical numerical methods.
 
 Here is a basic flow diagram of an evolutionary algorithm:
 
-![Diagram Overview](EvolutionaryComputation/img.png)
+![Diagram Overview](EvolutionaryComputation.egg-info/img.png)
 
 The algorithm can be broken down into six main components Initial Population, Selection for Reproduction, Crossover, Mutation,
 Selection for Survival, and Termination:
