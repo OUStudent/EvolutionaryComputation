@@ -1,0 +1,3 @@
+from EvolutionaryComputation.AutoML.modules import CustomConvolutionModule, CustomDeepModule
+from EvolutionaryComputation.AutoML.initial_populations import NetworkInitialPopulation
+from EvolutionaryComputation.AutoML.neural_networck_architecture import NetworkArchitectureEvolution
