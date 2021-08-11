@@ -14,6 +14,22 @@ where the goal is to model biological evolution in terms as an optimization proc
 --------------------------------
 # Algorithms Included
 
+As of current, there are three main types of algorithms included: Genetic Algorithms for solving generic optimization problems;
+genetic algorithms specifically created for evolving the weights of neural network for classification, regression, 
+auto-encoders, and reinforcement learning. 
+
+## Generic Optimization Problems
+
+As of current, there exists four classes for solving optimization problems, `GenericUnconstrainedProblem` and 
+`HyperParamUnconstrainedProblem` for solving unconstrained problems, `ConstrainedProblem` for solving constrained problems, 
+and `ParetoFrontMOP` for solving multi-objective problems by finding the pareto-front.
+
+## NeuroEvolution
+
+### Classification, Regression, 
+
+## Automated Machine Learning
+
 --------------------------------
 # Quick Overview of Evolutionary Algorithms
 
