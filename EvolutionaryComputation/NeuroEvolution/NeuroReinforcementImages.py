@@ -218,7 +218,7 @@ class AvgPool():
 
 import copy
 
-class NeuroReincorferImages(NeuroBase):
+class NeuroReinforcerImages(NeuroBase):
 
     class EvolvableCNN(NeuroBase):
 
@@ -456,7 +456,7 @@ class NeuroReincorferImages(NeuroBase):
 
 
 
-
+'''
 from nes_py.wrappers import JoypadSpace
 import gym_super_mario_bros
 from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
@@ -532,7 +532,7 @@ cnn_layers.append("relu")
 cnn_layers.append("MaxPool(2,2)")
 cnn_layers.append("Conv(1,4)")  # 3*3*32*prev_output = 9000
 cnn_layers.append("relu")
-#model = NeuroReincorferImages(cnn_layers=cnn_layers, deep_nodes=[100, 100, 100], picture_dim=[256, 244, 3],num_output=7,
+#model = NeuroReinforcerImages(cnn_layers=cnn_layers, deep_nodes=[100, 100, 100], picture_dim=[256, 244, 3],num_output=7,
 #                              fitness_function=fitness_function, deep_activation=['tanh', 'sigmoid', 'relu'])
 
 #model.reinforce(max_epoch=10, speciation=None, verbose=True, warm_start=False)
@@ -546,3 +546,4 @@ for i in range(5, 20):
     model.reinforce(max_epoch=max_epoch, verbose=True, warm_start=True)
     print("State Save")
     pickle.dump(model, open("mario_model{}".format(i), 'wb'))
+'''

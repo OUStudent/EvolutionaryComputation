@@ -18,5 +18,5 @@ class NeuroRegressor(NeuroBase):
     def predict(self, data):
         return self.best_model.predict(data)
 
-    def plot(self):
-        super().plot(self.mean_fit, self.best_fit, self.val_fit)
+    def plot(self, starting_gen=0):
+        super().plot(self.mean_fit, self.best_fit, self.val_fit, starting_gen=starting_gen)

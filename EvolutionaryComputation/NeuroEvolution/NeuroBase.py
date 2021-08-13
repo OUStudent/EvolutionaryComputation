@@ -233,18 +233,20 @@ class NeuroBase:
             best_fits = np.argsort(all_fit)[0:n]
         return [all_models[i] for i in best_fits]
 
-    def _algorithm_evolutionary_programming(self, gen, fit, batch_data, reinforcement=None):
+    def _algorithm_evolutionary_programming(self, gen, fit, batch_data, reinforcement=None, num_offspring=4):
 
         offspring_gen = []
         n = len(gen)
         for i in range(0, n):
-            offspring_gen.append(self.__mutation_lognormal(gen[i]))
+            for j in range(0, num_offspring):
+                offspring_gen.append(self.__mutation_lognormal(gen[i]))
 
         if reinforcement is None:
             offspring_fit = self.__fitness_function(offspring_gen, batch_data)
         else:
             offspring_fit = reinforcement(offspring_gen)
-        ind = np.asarray(range(0, 2 * n))
+
+        ind = np.asarray(range(0, (num_offspring+1) * n))
         temp = np.concatenate([fit, offspring_fit])
         if reinforcement:
             ind = ind[np.argsort(-temp)]
@@ -367,14 +369,15 @@ class NeuroBase:
 
                 if verbose:
                     msg = " Batch {}/{}" \
-                          "   Best Loss: {} Mean Loss: {} Val Loss: {}".format(batch_index + 1, num_batches,
-                                                                               fit_best, fit_mean, val_mean)
+                          "   Results for Batch: Best Loss: {} Mean Loss: {} Val Loss: {}".format(batch_index + 1, num_batches,
+                                                                               np.round(fit_best, 7), np.round(fit_mean, 7),
+                                                                                                  np.round(val_mean, 7))
                     if batch_index == num_batches - 1:
                         msg = msg + '\n'
                     sys.stdout.write("\r" + msg)
                 batch_index += 1
 
-                if algorithm == 'lognormal_mutation' or algorithm == 'speciation':
+                if algorithm == 'self-adaptive' or algorithm == 'speciation':
                     gen = self._algorithm_evolutionary_programming(gen, fit, [train_data[0][batch_train],
                                                                                train_data[1][batch_train]])
                 elif algorithm == 'generic':
@@ -388,19 +391,16 @@ class NeuroBase:
             self.mean_fit.append(np.mean(local_mean_fit))
             self.best_fit.append(np.min(local_best_fit))
             self.val_fit.append(np.mean(local_val_mean))
-
             if self.val_fit[k] > prev_val:
                 val_index += 1
             else:
-                if val_index > 0:
-                    val_index -= 1
-                else:
-                    val_index = 0
+                val_index = 0
+                prev_val = self.val_fit[k]
             if val_index == patience:
                 if early_stopping:
-                    print("Over Fitting")
+                    print("Ending Evolution: Over Fitting")
                     break
-            prev_val = self.val_fit[k]
+
 
         val_fit = self.__fitness_function(gen, val_data)
         best_index = np.argmin(val_fit)
@@ -411,12 +411,12 @@ class NeuroBase:
         self.last_gen = gen
         self.prev_epoch = max_epoch
 
-    def plot(self, mean_fit, best_fit, val_fit=None):
-        x = range(0, len(mean_fit))
-        plt.plot(x, mean_fit, label="Mean Loss")
-        plt.plot(x, best_fit, label="Best Loss")
+    def plot(self, mean_fit, best_fit, val_fit=None, starting_gen=0):
+        x = range(starting_gen, len(mean_fit))
+        plt.plot(x, mean_fit[starting_gen:], label="Mean Loss")
+        plt.plot(x, best_fit[starting_gen:], label="Best Loss")
         if val_fit:
-            plt.plot(x, val_fit, label="Validation Loss")
+            plt.plot(x, val_fit[starting_gen:], label="Validation Loss")
         plt.xlabel("Epochs/Generations")
         plt.ylabel("Loss")
         plt.suptitle("Loss Scores After Evolution")

@@ -60,13 +60,13 @@ class NetworkArchitectureEvolution:
                             if cnn[index] <= hyper[0]:
                                 index += 1
                                 if hyper[1][0] == 0:
-                                    model.add(MaxPooling2D(pool_size=(2, 2)))
+                                    model.add(MaxPooling2D(pool_size=(2, 2), padding="same"))
                                 elif hyper[1][1] == 0:
-                                    model.add(AveragePooling2D(pool_size=(2, 2)))
+                                    model.add(AveragePooling2D(pool_size=(2, 2), padding="same"))
                                 elif cnn[index] <= hyper[1][0]:
-                                    model.add(MaxPooling2D(pool_size=(2, 2)))
+                                    model.add(MaxPooling2D(pool_size=(2, 2), padding="same"))
                                 else:
-                                    model.add(AveragePooling2D(pool_size=(2, 2)))
+                                    model.add(AveragePooling2D(pool_size=(2, 2), padding="same"))
                                 index += 1
                             else:
                                 index += 1
@@ -136,9 +136,9 @@ class NetworkArchitectureEvolution:
             max_iter = np.maximum(5, int((max_models - percent * max_models) / gen_size))
 
         if find_max:
-            temp = np.argsort(-self.initial_population.fit[0:20])[0:num_best]
+            temp = np.argsort(-self.initial_population.fit)[0:num_best]
         else:
-            temp = np.argsort(self.initial_population.fit[0:20])[0:num_best]
+            temp = np.argsort(self.initial_population.fit)[0:num_best]
 
         if self.initial_population.convolution_count > 0:
             best_cnn = self.initial_population.init_pop_convolution[temp]
@@ -262,4 +262,3 @@ class NetworkArchitectureEvolution:
             if self.initial_population.deep_count > 0:
                 self.gen_deep = np.concatenate((self.gen_deep, ch_deep))[bst]
             fit = all_fit[bst]'''
-

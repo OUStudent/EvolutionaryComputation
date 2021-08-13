@@ -22,5 +22,8 @@ class NeuroAutoEncoder(NeuroBase):
     def decode(self, data):
         return self.best_model.predict(data, decode=True)
 
-    def plot(self):
-        super().plot(self.mean_fit, self.best_fit, self.val_fit)
+    def predict(self, data):
+        return self.best_model.predict(self.best_model.predict(data, encode=True), decode=True)
+
+    def plot(self, starting_gen=0):
+        super().plot(self.mean_fit, self.best_fit, self.val_fit, starting_gen=starting_gen)

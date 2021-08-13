@@ -13,8 +13,8 @@ class NeuroReinforcer(NeuroBase):
                          activation_function=activation_function, output_activation=output_activation,
                          error_function=fitness_function, population_size=population_size, reinforcement=True)
 
-    def plot(self):
-        super().plot(self.mean_fit, self.best_fit, None)
+    def plot(self, starting_gen=0):
+        super().plot(self.mean_fit, self.best_fit, None, starting_gen=starting_gen)
 
     def evolve(self, max_epoch, verbose=True, warm_start=False, algorithm='speciation'):
         if warm_start:
