@@ -3,7 +3,70 @@ from EvolutionaryComputation.util import *
 
 
 class HyperParamUnconstrainedProblem:
+    """Hyper Parameter Genetic Algorithm for Unconstrained Optimization Problems
 
+        HyperParamUnconstrainedProblem is a much more `advanced` algorithm than
+        GenericUnconstrainedProblem by employing more hyper-parameters for the user
+        to optimize. The algorithm contains many different hyper-parameters for
+        tuning, from crossover, selection, and dynamic reduction methods to probabilities
+        of mutation and crossover. It is suggested that this class is to only be used
+        for academic reasons, such as testing the influence of the parameters,
+        as each parameter needs to be tuned optimally to yield
+        acceptable results. Please use GenericUnconstrainedProblem for general problems.
+
+        HyperParamUnconstrainedProblem implements an "evolve" and "plot" method.
+
+        Parameters
+        -----------
+        fitness_function : function pointer
+            A pointer to a function that will evaluate and return the fitness of
+            each individual in a population given their parameter values. The function
+            should expect two parameters ``generation``, which will be a list of lists,
+            where each sub list is an individual; and ``init_pop_print`` which is a
+            boolean value defaulted to False which allows the user to print out
+            statements during the initial population selection, if chosen (see
+            examples for more info on this parameter). Lastly, the function should
+            return a numpy array of the fitness values.
+
+        upper_bound : list or numpy 1d array
+            A list or numpy 1d array representing the upper bound of the domain for the
+            unconstrained problem, where the first index of the list represents the upper
+            bound for the first variable. For example, if x1=4, x2=4, x3=8 are the upper
+            limits of the variables, then pass in ``[4, 4, 8]`` as the upper bound.
+
+        lower_bound : list or numpy 1d array
+            A list or numpy 1d array representing the lower bound of the domain for the
+            unconstrained problem, where the first index of the list represents the lower
+            bound for the first variable. For example, if x1=0, x2=-4, x3=1 are the lower
+            limits of the variables, then pass in ``[0, -4, 1]`` as the lower bound.
+
+        gen_size : int
+            The number of individuals within each generation to perform evolution with.
+
+        min_prob : float, default 0.05
+            The minimum probability for mutation and crossover.
+
+        min_mut : float, default 0.001
+            The minimum proportion for mutation.
+
+        Attributes
+        -----------
+        gen : numpy 2D array
+            A numpy 2D array of the individuals from the last generation of evolution.
+
+        best_individual : numpy 1D array
+            A numpy 1D array of the best individual from the last generation of evolution.
+
+        best_fit : list
+            A list of the best fitness values per generation of evolution.
+
+        mean_fit : list
+            A list of the mean fitness values per generation of evolution.
+
+        best_values : list
+            A list of the best individual per generation of evolution.
+
+        """
     def __init__(self, fitness_function, upper_bound, lower_bound, gen_size, min_prob=0.05, min_mut=0.001):
         self.gen_size = gen_size
         self.fitness_function = fitness_function
@@ -206,7 +269,86 @@ class HyperParamUnconstrainedProblem:
     def evolve(self, p_cross, p_mutate, mutate_bound=0.1, sel_method='roulette', rep_method='average', p_method='static',
                mut_method='static', tourn_size=.10, elitism=0.0, max_iter=100, info=True, find_max=False,
                par_count=2, par_battle=False, warm_start=False):
+        """Perform evolution with the given set of parameters
 
+        Parameters
+        -----------
+
+        max_iter : int
+                  The maximum number of iterations to run before terminating
+
+        info : bool
+              If True, print out information during the evolution process
+
+        warm_start : bool, default = False
+                    If True, the algorithm will use the last generation
+                    from the previous generation instead of creating a
+                    new initial population
+
+        p_cross : float, 0.01 to 1.0
+                 The probability of performing cross-over on the offspring.
+
+        p_mutate : float, 0.01 to 1.0
+                 The probability of performing cross-over on the offspring.
+
+        find_max : bool
+                  If True, the algorithm will try to maximize the fitness
+                  function given; else it will minimize.
+
+        mutate_bound : float, 0.01 to 1.0
+                      The percentage of the total domain bounds to mutate by. For
+                      example, if ``mutate_bound``=0.2, the offspring will be mutated
+                      by a max value of 0.2 times the total domain bounds.
+
+        sel_method : string, `roulette`, `tournament`, and `random`
+                   The selection method for choosing which individuals reproduce. If `roulette`,
+                   proportional selection will be used based off the raw fitness values of the
+                   population. If `tournament`, selection will be based off the winners from
+                   randomly generated tournaments of size `tourn_size` times `gen_size`. Lastly,
+                   if `random`, the parents are selected randomly.
+
+        rep_method : string, `average` or `intuitive`
+                     The reproduction method for performing crossover. `average` works by taking the
+                     average of the parents values, while `intuitive` randomly inherits the variable
+                     values from the set of parents.
+
+        p_method : string, `static`, `logistic`, or `linear`
+                 If `static`, the probabilities of mutation and crossover, `p_cross` and `p_mut`
+                 will be static for the entire evolution process. If `logistic`, the probabilities
+                 of mutation and crossover will logistically decrease from their starting value
+                 of `p_cross` and `p_mut` down to the min value of `min_prob`. If `linear`, the
+                 probabilities of mutation and crossover will linearly decrease from their
+                 starting values down to the min value of `min_prob` from the starting generation
+                 to `max_iter`.
+
+        mut_method : string, `static`, `logistic`, or `linear`
+                 If `static`, the mutation percentage, `mutate_bound` will be static for the
+                 entire evolution process. If `logistic`, the mutation percentage will logistically
+                 decrease from its starting value of `mutate_bound` down to the min value of `min_mut`.
+                 If `linear`, the  proportion of mutation will linearly decrease from its
+                 starting value down to the min value of `min_mut` from the starting generation
+                 to `max_iter`.
+
+        tourn_size : float, 0.01 to 1.0
+                   If `sel_method` is `roulette`, then the tournament is created with a size equal to
+                   the gen_size times `tourn_size`. For example, if gen_size is 100 and `tourn_size` is
+                   0.05, then the tournaments will be created with size 5.
+
+        par_count : int, default 3
+                    The number of parents used for crossover.
+
+        par_battle : bool, default = False
+                    If True, the offspring will fight the parents for survival. If False, the offspring
+                    will always replace the parents, even if their fitness values are worse.
+
+        elitism : float, 0.0 to 1.0
+                  Represents the proportion of the best individuals in the population to always
+                  be carried over to the next generation. For example, if gen_size is 100 and
+                  `elitism` is 0.05, then the best 5 individuals from each generation will
+                  always be carried over for survival. This is performed to ensure good solutions
+                  are not lost if they are not chosen for reproduction or survival.
+
+        """
         if not warm_start:
             self.mean_fit = []
             self.best_fit = []
@@ -387,6 +529,14 @@ class HyperParamUnconstrainedProblem:
             self.best_individual = self.gen[np.argmin(fitness)]
 
     def plot(self, starting_gen=0):
+        """Plots the best and mean fitness values after the evolution process.
+
+        Parameters
+        -----------
+
+        starting_gen : int
+                      The starting index for plotting.
+        """
         x_range = range(starting_gen, len(self.best_fit))
         plt.plot(x_range, self.mean_fit[starting_gen:], label="Mean Fitness")
         plt.plot(x_range, self.best_fit[starting_gen:], label="Best Fitness")

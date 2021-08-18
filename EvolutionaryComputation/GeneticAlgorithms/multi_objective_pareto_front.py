@@ -2,7 +2,54 @@ from EvolutionaryComputation.util import *
 
 
 class ParetoFrontMOP:
+    """Genetic Algorithm for finding the Pareto-Front of Multiple Objective Problems
 
+    ParetoFrontMOP is an algorithm that finds the pareto-front, a set of decision
+    vectors that contains an archive of solutions such that none of them strongly
+    dominate each other, but only weakly dominate each other. The algorithm works
+    by creating multiple populations, where the offspring are checked to see if
+    they dominate the parents; if so, they are compared to the archive, and the archive
+    is updated accordingly.
+
+    ParetoFrontMOP implements an "evolve" and "plot" method.
+
+    Parameters
+    -----------
+    fitness_functions : function pointer
+        A pointer to a function that will evaluate and return the fitness of
+        each individual in a population given their parameter values. The function
+        should work by calling all the objective functions and returning their
+        fitness values. See the example notebook for more information.
+        The function
+
+    upper_bound : list or numpy 1d array
+        A list or numpy 1d array representing the upper bound of the domain for the
+        unconstrained problem, where the first index of the list represents the upper
+        bound for the first variable. For example, if x1=4, x2=4, x3=8 are the upper
+        limits of the variables, then pass in ``[4, 4, 8]`` as the upper bound.
+
+    lower_bound : list or numpy 1d array
+        A list or numpy 1d array representing the lower bound of the domain for the
+        unconstrained problem, where the first index of the list represents the lower
+        bound for the first variable. For example, if x1=0, x2=-4, x3=1 are the lower
+        limits of the variables, then pass in ``[0, -4, 1]`` as the lower bound.
+
+    gen_size : int
+        The number of individuals within each generation to perform evolution with.
+
+    Attributes
+    -----------
+    gen : numpy 2D array
+        A numpy 2D array of the individuals from the last generation of evolution.
+
+    best_individual : numpy 1D array
+        A numpy 1D array of the best individual from the last generation of evolution.
+
+    archive : list
+        A list of the archive containing the best individuals from the pareto-front
+         from the generation of evolution.
+
+        """
     def __init__(self, fitness_functions, upper_bound, lower_bound, gen_size):
         self.gen_size = gen_size
         self.fitness_functions = fitness_functions
@@ -112,7 +159,50 @@ class ParetoFrontMOP:
     # iter for archive creates a bigger pareto-front
     def evolve(self, max_iter=40, warm_start=False, sigma_bound=None, info=True, cross_method=1, par_count=3,
                max_distance=2.0, archive_iter=30, max_archive_size=200):
+        """Perform evolution with the given set of parameters
 
+            Parameters
+            -----------
+
+            max_iter : int
+                      The maximum number of iterations to run before terminating
+
+            info : bool
+                  If True, print out information during the evolution process
+
+            warm_start : bool
+                        If True, the algorithm will use the last generation
+                        from the previous generation instead of creating a
+                        new initial population
+
+            sigma_bound : bool or two value list
+                        If None, defaults to ``[0.01, 0.2]``. This represents
+                        the mutation bounds for mutation. First index represents
+                        the lower bound while the second index represents the upper
+                        bound.
+
+            cross_method : int, default 1
+                          If 1, the parents are crossed-over using the 'averaging'
+                          method; if 2, the parents are crossed-over using the
+                          'intuitive' cross over method.
+
+            par_count : int, default 3
+                        The number of parents used for crossover.
+
+            max_distance : float, default 2.0
+                          The euclidean distance limit for penalizing decision vectors
+                          too close to others in the pareto-archive.
+
+            archive_iter : int, default 30
+                          Runs the complete algorithm a total of ``archive_iter`` times, while
+                          each iteration runs the algorithm until ``max_iter`` times are reached.
+                          After each ``archive_iter`` the archive is updated.
+
+            max_archive_size : int, default 200
+                              The maximum number of decision vectors allowed within the
+                              archive.
+
+            """
         if sigma_bound is None:
             sigma_bound = [0.01, 0.2]
 
@@ -255,6 +345,8 @@ class ParetoFrontMOP:
         self.archive = np.asarray(self.archive)
 
     def plot(self):
+        """Plots the pareto-front after the evolution process.
+        """
         fx = self.fitness_functions(self.archive)
         n = len(fx[0])
 

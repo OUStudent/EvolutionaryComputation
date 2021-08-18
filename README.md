@@ -8,27 +8,68 @@ where the goal is to model biological evolution in terms as an optimization proc
 
 # Installation
 
+```python
+pip install EvolutionaryComputation
+```
+
 --------------------------------
 # Dependencies
 
+- numpy
+- sklearn
+- tensorflow
+- keras
+- matplotlib
+- scipy
+- psutil
+
 --------------------------------
+
 # Algorithms Included
 
-As of current, there are three main types of algorithms included: Genetic Algorithms for solving generic optimization problems;
-genetic algorithms specifically created for evolving the weights of neural network for classification, regression, 
-auto-encoders, and reinforcement learning. 
+--------------------------------
+As of current, there are three main types of submodules of algorithms included: Genetic Algorithms for solving 
+optimization problems; genetic algorithms specifically created for evolving the weights of neural network for classification, 
+regression, auto-encoders, and reinforcement learning; and genetic algorithms specifically created for automated machine
+learning through hyperparameter optimization. In addition, within the automated machine learning submodule, a framework
+for evolving the architecture of deep and convolutional neural networks via Keras API has been developed.
 
-## Generic Optimization Problems
+## Optimization Problems
 
 As of current, there exists four classes for solving optimization problems, `GenericUnconstrainedProblem` and 
 `HyperParamUnconstrainedProblem` for solving unconstrained problems, `ConstrainedProblem` for solving constrained problems, 
 and `ParetoFrontMOP` for solving multi-objective problems by finding the pareto-front.
 
-## NeuroEvolution
+## NeuroEvolution 
 
-### Classification, Regression, 
+### Regression, Classification, and Auto-Encoders
+
+As of current, there exists three classes for training feed forward neural networks, `NeuroRegressor`, `NeuroClassifier`,
+and `NeuroAutoEncoder`. All three classes use highly specialized genetic algorithms for evolving only the weights
+of a feed forward neural network, keeping the layer and node counts, along with activation functions static. `NeuroRegressor`
+is specialized for regressional analysis, `NeuroClassifier` for classification or labeling, and `NeuroAutoEncoder` for
+encoding and decoding. 
+
+NOTE: It must be stated that neuro-evolutionary algorithms for `NeuroRegressor`, `NeuroClassifier`, and `NeuroAutoEncoder`
+are not designed for extremely large models. Genetic algorithms work extremely well when the number of parameters is extremely
+small; however, in practice, standard neural networks can have up to millions of trainable parameters. It is suggested that
+if the number of trainable parameters is greater than 10,000 then these neuro-evolutionary algorithms will fail to evolve 
+any meaningful networks. It is suggested that this submodule should be purely educational and experimental, or practible
+for small number of inputs and network sizes. See example notebooks in submodule for realistic examples.
+
+### Reinforcement Learning
+
+As of current, there exists two classes for reinforcement learning, `NeuroReinforcer` and `NeuroReinforerImages`. Both of 
+these classes work by evolving the weights of a static feed forward neural network. However, they have been adapted to
+evolve activation functions for each layer. `NeuroReinforcer` is designed for handling non-image like numerical input, 
+while `NeuroReinforerImages` is designed for handling three channel image like input. 
 
 ## Automated Machine Learning
+
+As of current, there are two main classes for automated machine learning. The first is a general framework for optimizing 
+the hyper-parameters of a generic machine learning algorithm, `CustomAutoMLAlgorithm`. The second is a framework specifically
+designed for evolving both deep and convolutional neural networks through the Keras API, `NetworkArchitectureEvolution`.
+Please see the notebook examples on how the algorithms are developed and used. 
 
 --------------------------------
 # Quick Overview of Evolutionary Algorithms

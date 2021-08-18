@@ -2,6 +2,66 @@ from EvolutionaryComputation.util import *
 
 
 class ConstrainedProblem:
+    """Genetic Algorithm for Constrained Optimization Problems
+
+        ConstrainedProblem is an algorithm that works by utilizing relative fitness
+        instead of raw fitness. Relative fitness is computed by examining how many
+        times the current individual's raw fitness is better than a random selection
+        of individuals from the population. The main problem concerning constrained
+        problems is dealing with solutions that break the constraints. To deal with
+        this, the algorithm works by splitting the solutions into two groups: those
+        that violate the constraints, and those that do not. When computing relative
+        fitness, if two solutions are compared that do not break constraints, the
+        solution with the better raw fitness is chosen. If two solutions are chosen
+        where one breaks a constraint and the other does not, the solution that does
+        not break any of the constraints is chosen. Lastly, if two solutions are
+        chosen where they both break the constraints, the solution whose constraints
+        are broken 'less' is chosen.
+
+        ConstrainedProblem implements an "evolve" and "plot" method.
+
+        Parameters
+        -----------
+        fitness_function : function pointer
+            A pointer to a function that will evaluate and return the fitness of
+            each individual in a population given their parameter values. Lastly, the
+            function should return a numpy array of the fitness values.
+
+        constraints : function pointer
+            A pointer to a function that will evaluate all the constraints for
+            each individual in a population given their parameter value. Lastly, the
+            function should return a numpy array of the fitness values.
+
+        upper_bound : list or numpy 1d array
+            A list or numpy 1d array representing the upper bound of the domain for the
+            unconstrained problem, where the first index of the list represents the upper
+            bound for the first variable. For example, if x1=4, x2=4, x3=8 are the upper
+            limits of the variables, then pass in ``[4, 4, 8]`` as the upper bound.
+
+        lower_bound : list or numpy 1d array
+            A list or numpy 1d array representing the lower bound of the domain for the
+            unconstrained problem, where the first index of the list represents the lower
+            bound for the first variable. For example, if x1=0, x2=-4, x3=1 are the lower
+            limits of the variables, then pass in ``[0, -4, 1]`` as the lower bound.
+
+        gen_size : int
+            The number of individuals within each generation to perform evolution with.
+
+        Attributes
+        -----------
+        gen : numpy 2D array
+            A numpy 2D array of the individuals from the last generation of evolution.
+
+        best_individual : numpy 1D array
+            A numpy 1D array of the best individual from the last generation of evolution.
+
+        best_fit : list
+            A list of the best fitness values per generation of evolution.
+
+        mean_fit : list
+            A list of the mean fitness values per generation of evolution.
+
+        """
 
     def __init__(self, fitness_function, constraints, upper_bound, lower_bound, gen_size):
         self.gen_size = gen_size
@@ -74,6 +134,18 @@ class ConstrainedProblem:
         return np.asarray(offspring_values), np.asarray(offspring_sigma)
 
     def plot(self, plot_sigmas=False, starting_gen=0):
+        """Plots the best and mean fitness values after the evolution process.
+
+        Parameters
+        -----------
+
+        starting_gen : int
+                      The starting index for plotting.
+
+        plot_sigmas : bool
+                     If true, the self-adaptive mutation variations will
+                     be plotted as well.
+        """
         x_range = range(starting_gen, len(self.best_fit))
         if plot_sigmas:
             mean_sigmas = np.asarray(self.mean_sigmas[starting_gen:,])
@@ -93,7 +165,33 @@ class ConstrainedProblem:
         plt.show()
 
     def evolve(self, max_iter=300, warm_start=False, sigma_bound=None, find_max=False, info=True):
+        """Perform evolution with the given set of parameters
 
+        Parameters
+        -----------
+
+        max_iter : int
+                  The maximum number of iterations to run before terminating
+
+        info : bool
+              If True, print out information during the evolution process
+
+        warm_start : bool
+                    If True, the algorithm will use the last generation
+                    from the previous generation instead of creating a
+                    new initial population
+
+        sigma_bound : bool or two value list
+                    If None, defaults to ``[0.01, 0.2]``. This represents
+                    the mutation bounds for mutation. First index represents
+                    the lower bound while the second index represents the upper
+                    bound.
+
+        find_max : bool
+                  If True, the algorithm will try to maximize the fitness
+                  function given; else it will minimize.
+
+        """
         if sigma_bound is None:
             sigma_bound = [0.01, 0.2]
 

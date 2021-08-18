@@ -54,7 +54,6 @@ def get_indices(X_shape, HF, WF, stride, pad):
 
     return i, j, d
 
-
 def im2col(X, HF, WF, stride, pad):
     """
         Transforms our input image into a matrix.
@@ -74,7 +73,6 @@ def im2col(X, HF, WF, stride, pad):
     cols = X_padded[:, d, i, j]
     cols = np.concatenate(cols, axis=-1)
     return cols
-
 
 def col2im(dX_col, X_shape, HF, WF, stride, pad):
     """
@@ -215,79 +213,154 @@ class AvgPool():
 
         return A_pool
 
-
-import copy
-
 class NeuroReinforcerImages(NeuroBase):
+    """Convolutional Neural Network for Reinforcement Learning whose weights, kernels, and activation functions are evolved.
+
+                    NeuroReinforcerImages evolves the weights of the deep and convolutional sections
+                    of the neural network given the convolution structure, hidden layer/node counts,
+                    and activation functions. It also implements a "reinforce", "predict", and
+                    "plot" method.
+
+                    Unlike NeuroReinforcer, NeuroReinforcerImages is designed for image like input.
+                    If input is non-image like, please use NeuroReinforcer instead.
+
+                    Parameters
+                    ------------
+
+                    picture_dim : list or tuple of integers
+                               A list or tuple of integers of the dimensions of the image. For example,
+                               if the image is 256 by 244 with 3 color RGB channels, then
+                               `picture_dim` = [256, 244, 3].
+
+                    deep_nodes : list of integers
+                               A list containing the number of nodes for each hidden deep layer. For
+                               example, if `layer_nodes` = `[10, 25, 10]` then there will be
+                               three hidden layers with node counts 10, 15, 10.
+
+                    cnn_layers : list of strings
+                              NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
+
+                    num_output : int
+                                The number of output variables.
+
+                    output_activation : string, default = 'softmax'
+                                        Corresponds to the activation function of the last layer for
+                                        output.
+
+                    deep_activation : list, default = None
+                                        If string, all the deep hidden layers will have the same activation
+                                        function. If list, the deep hidden layers will get the corresponding
+                                        activation function. For example, if `activation_function`
+                                        equals `['relu', 'tanh', 'sigmoid']` then the first hidden layer will
+                                        get 'relu', while the second 'tanh', and third 'sigmoid'. The currently
+                                        available activation functions are : 'relu', 'tanh', 'sigmoid', 'selu',
+                                        'elu', 'unit', 'softmax', 'gaussian', 'leaky_relu', and 'purlin' (identity).
+
+                    population_size : int, default = 100
+                                  The population size of the generation.
+
+                    Attributes
+                    -----------
+
+                    best_model : EvolvableCNN Object
+                        An EvolvableCNN Object representing the best individual from the last generation
+                        of evolution.
+
+                    """
+
+    def __init__(self, cnn_layers, deep_nodes, picture_dim, num_output, fitness_function, deep_activation='relu',
+                 output_activation='softmax', population_size=20):
+        if deep_activation is None:
+            deep_activation = ['relu', 'tanh', 'sigmoid', 'gaussian', 'leaky_relu', 'selu']
+        self.species_layers = deep_activation
+        self._fit = None
+        self._max_gen_size = population_size
+        self.num_output = num_output
+        self.layers = []
+        self.cnn_activations = []
+        self.cnn_layers = cnn_layers
+        self.layer_nodes = deep_nodes
+        self.output_activation_name = output_activation
+        self.activation_function_name = deep_activation
+        self.picture_dim = picture_dim
+        self._error_function = fitness_function
+        self.best_fit = []
+        self.mean_fit = []
+        self.last_gen = []
+        self.best_model = None
+        self.prev_epoch = 0
+        self.species = None
+        self.species_names = None
+        self._fit = None
 
     class EvolvableCNN(NeuroBase):
 
-        def __init__(self, cnn_layers, picture_dim, deep_layers, deep_activation, deep_out, num_output):
-            self.layers = []
-            self.cnn_activations = []
-            self.sigmas = []
-            index = 0
-            num_train = 0
-            for layer in cnn_layers:
-                if 'Conv' in layer:
-                    num_filter, filter_size = layer[layer.find("(") + 1:layer.find(")")].replace(" ", "").split(",")
-                    num_filter = int(num_filter)
-                    filter_size = int(filter_size)
-                    val = np.sqrt(1.0/filter_size)
+            def __init__(self, cnn_layers, picture_dim, deep_layers, deep_activation, deep_out, num_output):
+                self.layers = []
+                self.cnn_activations = []
+                self.sigmas = []
+                index = 0
+                num_train = 0
+                for layer in cnn_layers:
+                    if 'Conv' in layer:
+                        num_filter, filter_size = layer[layer.find("(") + 1:layer.find(")")].replace(" ", "").split(",")
+                        num_filter = int(num_filter)
+                        filter_size = int(filter_size)
+                        val = np.sqrt(1.0/filter_size)
 
-                    self.sigmas.append(np.random.uniform(0.01*val, 0.2*val, 1)[0])
-                    if index == 0:
-                        nb_channel = picture_dim[2]
+                        self.sigmas.append(np.random.uniform(0.01*val, 0.2*val, 1)[0])
+                        if index == 0:
+                            nb_channel = picture_dim[2]
+                        else:
+                            nb_channel = prev_filter_size
+                        num_train += filter_size * filter_size * num_filter * nb_channel + filter_size
+                        self.layers.append(Conv(nb_filters=num_filter, filter_size=filter_size,
+                                                nb_channels=nb_channel))
+                        prev_filter_size = num_filter
+                    elif 'AvgPool' in layer:
+                        filter_size, stride = layer[layer.find("(") + 1:layer.find(")")].replace(" ", "").split(",")
+                        self.layers.append(AvgPool(filter_size=int(filter_size), stride=int(stride)))
+                    elif 'MaxPool' in layer:
+                        filter_size, stride = layer[layer.find("(") + 1:layer.find(")")].replace(" ", "").split(",")
+                        self.layers.append(MaxPool(filter_size=int(filter_size), stride=int(stride)))
                     else:
-                        nb_channel = prev_filter_size
-                    num_train += filter_size * filter_size * num_filter * nb_channel + filter_size
-                    self.layers.append(Conv(nb_filters=num_filter, filter_size=filter_size,
-                                            nb_channels=nb_channel))
-                    prev_filter_size = num_filter
-                elif 'AvgPool' in layer:
-                    filter_size, stride = layer[layer.find("(") + 1:layer.find(")")].replace(" ", "").split(",")
-                    self.layers.append(AvgPool(filter_size=int(filter_size), stride=int(stride)))
-                elif 'MaxPool' in layer:
-                    filter_size, stride = layer[layer.find("(") + 1:layer.find(")")].replace(" ", "").split(",")
-                    self.layers.append(MaxPool(filter_size=int(filter_size), stride=int(stride)))
-                else:
-                    if layer == 'sigmoid':
-                        self.layers.append(sigmoid)
-                    elif layer == 'tanh':
-                        self.layers.append(tanh)
-                    elif layer == 'gaussian':
-                        self.layers.append(gaussian)
-                    elif layer == 'relu':
-                        self.layers.append(relu)
-                    elif layer == 'selu':
-                        self.layers.append(selu)
-                    elif layer == 'leaky_relu':
-                        self.layers.append(leaky_relu)
-                index += 1
-            rnd_pic = np.random.uniform(-0.05, 0.05, picture_dim[0] * picture_dim[1] * picture_dim[2]).reshape(
-                picture_dim[0], picture_dim[1], picture_dim[2])
-            res = self.predict(rnd_pic, True)
-            a, b, n, c = res.shape
-            self._num_output = n * c
-            self._num_train = num_train
-            self.deep = NeuroBase.EvolvableNetwork(layer_nodes=deep_layers, num_input=self._num_output,
-                                                   num_output=num_output, activation_function=deep_activation,
-                                                   output_activation=deep_out, initialize=True)
+                        if layer == 'sigmoid':
+                            self.layers.append(sigmoid)
+                        elif layer == 'tanh':
+                            self.layers.append(tanh)
+                        elif layer == 'gaussian':
+                            self.layers.append(gaussian)
+                        elif layer == 'relu':
+                            self.layers.append(relu)
+                        elif layer == 'selu':
+                            self.layers.append(selu)
+                        elif layer == 'leaky_relu':
+                            self.layers.append(leaky_relu)
+                    index += 1
+                rnd_pic = np.random.uniform(-0.05, 0.05, picture_dim[0] * picture_dim[1] * picture_dim[2]).reshape(
+                    picture_dim[0], picture_dim[1], picture_dim[2])
+                res = self.predict(rnd_pic, True)
+                a, b, n, c = res.shape
+                self._num_output = n * c
+                self._num_train = num_train
+                self.deep = NeuroBase.EvolvableNetwork(layer_nodes=deep_layers, num_input=self._num_output,
+                                                       num_output=num_output, activation_function=deep_activation,
+                                                       output_activation=deep_out, initialize=True)
 
-        def predict(self, image, temp=False):
-            image = image[..., np.newaxis].T
-            for i in range(0, len(self.layers)):
-                layer = self.layers[i]
-                if i == 0:
-                    result = layer.forward(image)
-                else:
-                    if isinstance(layer, AvgPool) or isinstance(layer, MaxPool) or isinstance(layer, Conv):
-                        result = layer.forward(result)
+            def predict(self, image, temp=False):
+                image = image[..., np.newaxis].T
+                for i in range(0, len(self.layers)):
+                    layer = self.layers[i]
+                    if i == 0:
+                        result = layer.forward(image)
                     else:
-                        result = layer(result)
-            if temp:
-                return result
-            return self.deep.predict(result.flatten())
+                        if isinstance(layer, AvgPool) or isinstance(layer, MaxPool) or isinstance(layer, Conv):
+                            result = layer.forward(result)
+                        else:
+                            result = layer(result)
+                if temp:
+                    return result
+                return self.deep.predict(result.flatten())
 
     def _mutation_lognormal_cnn(self, par):
         child = copy.deepcopy(par)
@@ -342,8 +415,30 @@ class NeuroReinforcerImages(NeuroBase):
             init_gen.append(obj)
         return init_gen
 
-    def reinforce(self, max_epoch, speciation=None, verbose=True, warm_start=False, algorithm='speciation'):
+    def reinforce(self, max_epoch, verbose=True, warm_start=False, algorithm='speciation'):
+        """Perform evolution with the given set of parameters
 
+                Parameters
+                -----------
+
+                max_epoch : int
+                         The maximum number of epochs to run the evolution process
+
+                verbose : bool, default = True
+                        If True, print out information during the evolution process
+
+                warm_start : bool
+                            If True, the algorithm will use the last generation
+                            from the previous generation instead of creating a
+                            new initial population
+
+                algorithm : string, default = 'speciation'
+                       A string to denote the algorithm to be used for evolution.
+                       Two algorithms are currently available: 'speciation' and
+                       'self-adaptive'. Please see the example notebooks for a
+                       run down.
+
+                """
         if warm_start:
             gen = self.last_gen
             max_epoch += self.prev_epoch
@@ -411,47 +506,16 @@ class NeuroReinforcerImages(NeuroBase):
             self.species = species
             self.species_names = species_names
 
-    def __init__(self, cnn_layers, deep_nodes, picture_dim, num_output, fitness_function, deep_activation='relu',
-                 output_activation='softmax', population_size=20):
-        if deep_activation is None:
-            deep_activation = ['relu', 'tanh', 'sigmoid', 'gaussian', 'leaky_relu', 'selu']
-        self.species_layers = deep_activation
-        self._fit = None
-        self._max_gen_size = population_size
-        self.num_output = num_output
-        self.layers = []
-        self.cnn_activations = []
-        self.cnn_layers = cnn_layers
-        self.layer_nodes = deep_nodes
-        self.output_activation_name = output_activation
-        self.activation_function_name = deep_activation
-        self.picture_dim = picture_dim
-        self._error_function = fitness_function
-        self.best_fit = []
-        self.mean_fit = []
-        self.last_gen = []
-        self.best_model = []
-        self.prev_epoch = 0
-        self.species = None
-        self.species_names = None
-        self._fit = None
+    def plot(self, starting_gen=0):
+        """Plots the best and mean fitness values after the evolution process.
 
-    def cnn_predict(self, image):
-        image = image[..., np.newaxis].T
-        for i in range(0, len(self.layers)):
-            layer = self.layers[i]
-            if i == 0:
-                result = layer.forward(image)
-            else:
-                if isinstance(layer, AvgPool) or isinstance(layer, MaxPool) or isinstance(layer, Conv):
-                    result = layer.forward(result)
-                else:
-                    result = layer(result)
-        return result
+        Parameters
+        -----------
 
-    def predict(self, image):
-        res = self.cnn_predict(image)
-        res = res.flatten()
+        starting_gen : int
+                      The starting index for plotting.
+        """
+        super().plot(self.mean_fit, self.best_fit, None, starting_gen=starting_gen)
 
 
 

@@ -62,12 +62,15 @@ class NeuroBase:
             output.append(t)
         return np.asarray(output)
 
-    def _initialize_networks(self, speciation=None):
+    def _initialize_networks(self, speciation=None, just_layers=False):
         init_gen = []
         for i in range(0, self._max_gen_size):
             if speciation:
                 num_layers = len(self.layer_nodes)
-                activations = np.random.choice(speciation, num_layers).tolist()
+                if just_layers:
+                    activations = [np.random.choice(speciation, 1)[0]]*num_layers
+                else:
+                    activations = np.random.choice(speciation, num_layers).tolist()
                 obj = self.EvolvableNetwork(layer_nodes=self.layer_nodes, num_input=self.num_input,
                                             num_output=self.num_output,
                                             activation_function=activations,
@@ -241,20 +244,25 @@ class NeuroBase:
             for j in range(0, num_offspring):
                 offspring_gen.append(self.__mutation_lognormal(gen[i]))
 
+        if isinstance(gen, list):
+            total = gen + offspring_gen
+        else:
+            total = gen.tolist() + offspring_gen
+
         if reinforcement is None:
             offspring_fit = self.__fitness_function(offspring_gen, batch_data)
         else:
             offspring_fit = reinforcement(offspring_gen)
 
-        ind = np.asarray(range(0, (num_offspring+1) * n))
+        ind = np.asarray(range(0, len(total)))
         temp = np.concatenate([fit, offspring_fit])
         if reinforcement:
             ind = ind[np.argsort(-temp)]
         else:
             ind = ind[np.argsort(temp)]
-        total = gen + offspring_gen
+
         if reinforcement:
-            return [total[i] for i in ind[0:n]], [temp[i] for i in ind[0:n]]
+            return np.asarray(total, dtype=object)[ind][0:n], temp[ind][0:n]
         else:
             return [total[i] for i in ind[0:n]]
 

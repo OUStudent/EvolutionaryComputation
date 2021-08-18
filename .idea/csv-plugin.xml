@@ -17,6 +17,27 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="C:\Users\BScot\OneDrive\Desktop\EvolutionaryComputation\test_reinforcement.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\EvolutionaryComputation\AutoML\custom_automl_algorithm.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\EvolutionaryComputation\GeneticAlgorithms\CustomInitialPopulation.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\EvolutionaryComputation\GeneticAlgorithms\README.md">
           <value>
             <Attribute>
@@ -25,6 +46,41 @@
           </value>
         </entry>
         <entry key="\EvolutionaryComputation\GeneticAlgorithms\generic_unconstrained.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\EvolutionaryComputation\GeneticAlgorithms\tes.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\EvolutionaryComputation\NeuroEvolution\NeuroBase.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\EvolutionaryComputation\NeuroEvolution\NeuroReinforcement.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\EvolutionaryComputation\NeuroEvolution\README.md">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\EvolutionaryComputation\NeuroEvolution\test.py">
           <value>
             <Attribute>
               <option name="separator" value="," />

@@ -1,6 +1,95 @@
 from EvolutionaryComputation.util import *
 from modules import CustomDeepModule, CustomConvolutionModule
 
+class CustomInitialPopulation:
+    """Custom Initial Population by Randomly sampling from domain space for Machine Learning Algorithms
+
+    CustomInitialPopulation is designed for the CustomAutoMLAlgorithm to act as the base initial
+    population from which the genetic algorithm can optimize the best individuals. CustomInitialPopulation
+    takes in the bounds of the optimization problem and fitness function. Individuals are created
+    through random sampling to increase the diversity of the initial population. This diversity is crucial
+    for the evolution process as it presents the algorithm with a host of parameters to choose from.
+
+    CustomInitialPopulation implements a "fit" and "plot" method.
+     Parameters
+    -----------
+
+    fitness_function : function pointer
+        A pointer to a function that will evaluate and return the fitness of
+        each individual in a population given their parameter values. The function
+        should expect two parameters ``generation``, which will be a list of lists,
+        where each sub list is an individual; and ``init_pop_print`` which is a
+        boolean value defaulted to False which allows the user to print out
+        statements during the initial population selection, if chosen (see
+        examples for more info on this parameter). Lastly, the function should
+        return a numpy array of the fitness values.
+
+    upper_bound : list or numpy 1d array
+        A list or numpy 1d array representing the upper bound of the domain for the
+        unconstrained problem, where the first index of the list represents the upper
+        bound for the first variable. For example, if x1=4, x2=4, x3=8 are the upper
+        limits of the variables, then pass in ``[4, 4, 8]`` as the upper bound.
+
+    lower_bound : list or numpy 1d array
+        A list or numpy 1d array representing the lower bound of the domain for the
+        unconstrained problem, where the first index of the list represents the lower
+        bound for the first variable. For example, if x1=0, x2=-4, x3=1 are the lower
+        limits of the variables, then pass in ``[0, -4, 1]`` as the lower bound.
+
+    init_size : int
+        The number of individuals for the initial population
+
+    Attributes
+    -----------
+    init_pop : numpy 2D array
+        A numpy 2D array of the randomly samples individuals for the initial population
+
+    fitness : numpy 1D array
+        A numpy 1D array of the fitness values for each individual
+    """
+
+    def __init__(self, upper_bound, lower_bound, init_size):
+        self.init_size = init_size
+        self.num_variables = len(upper_bound)
+        self.upper_bound = upper_bound
+        self.lower_bound = lower_bound
+        self.total_bound = np.asarray(upper_bound) - np.asarray(lower_bound)
+        self.domain = [upper_bound, lower_bound]
+        self.init_pop = None
+        self.fitness = None
+
+    def fit(self, fitness_function):
+        """Obtains the fitness values for the initial population using the `fitness_function`
+
+            Parameters
+            -----------
+
+            fitness_function : function pointer
+                A pointer to a function that will evaluate and return the fitness of
+                each individual in a population given their parameter values. The function
+                should expect two parameters ``generation``, which will be a list of lists,
+                where each sub list is an individual; and ``init_pop_print`` which is a
+                boolean value defaulted to False which allows the user to print out
+                statements during the initial population selection, if chosen (see
+                examples for more info on this parameter). Lastly, the function should
+                return a numpy array of the fitness values.
+
+            """
+        self.init_pop = np.empty(shape=(self.init_size, self.num_variables))
+        for i in range(0, self.num_variables):
+            self.init_pop[:, i] = np.random.uniform(self.lower_bound[i], self.upper_bound[i], self.init_size)
+
+        self.fitness = fitness_function(self.init_pop, init_pop_print=True)
+
+    def plot(self):
+        """Plots a box plot of the fitness values after running the initial population
+        """
+        fig = plt.figure()
+        plt.boxplot(self.fitness)
+        plt.suptitle("Fitness From Initial Population")
+        plt.ylabel("Fitness")
+        plt.show()
+
 
 class NetworkInitialPopulation:
 
