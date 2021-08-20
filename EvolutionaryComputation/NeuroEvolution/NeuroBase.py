@@ -252,10 +252,13 @@ class NeuroBase:
         if reinforcement is None:
             offspring_fit = self.__fitness_function(offspring_gen, batch_data)
         else:
-            offspring_fit = reinforcement(offspring_gen)
+            offspring_fit = reinforcement(total)
 
         ind = np.asarray(range(0, len(total)))
-        temp = np.concatenate([fit, offspring_fit])
+        if reinforcement:
+            temp = offspring_fit
+        else:
+            temp = np.concatenate([fit, offspring_fit])
         if reinforcement:
             ind = ind[np.argsort(-temp)]
         else:

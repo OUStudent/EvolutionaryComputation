@@ -60,7 +60,7 @@ class CustomAutoMLAlgorithm:
             A list of the best individual per generation of evolution.
 
         """
-    def __init__(self, fitness_function, custom_initial_population, gen_size):
+    def __init__(self, fitness_function, custom_initial_population, gen_size, best_sigma=None):
         self.custom_initial_population = custom_initial_population
         self.gen_size = gen_size
         self.fitness_function = fitness_function
@@ -75,6 +75,8 @@ class CustomAutoMLAlgorithm:
         self.gen = None
         self.sigma = None
         self.best_individual = None
+        self.best_sigma = best_sigma
+        self.start_iter = 0
 
     # mutates the current generation to create offspring using
     # the strategy parameters sigma
@@ -192,6 +194,15 @@ class CustomAutoMLAlgorithm:
             bst = np.argmin(f)
             return f[bst], total[bst]
 
+    def _create_pop_target(self, target, gen_size, mutation_percent,total_bounds):
+        init_pop = np.empty(
+            shape=(gen_size, len(target)))
+        for i in range(0, gen_size):
+            for j in range(0, len(target)):
+                init_pop[i, j] = target[j] + np.random.uniform(-mutation_percent*total_bounds[j],
+                                                               mutation_percent*total_bounds[j], 1)[0]
+        return init_pop
+
     # greedy - proportional selection for mating - 4 cross 4 mut
     # differential
     def evolve(self, algorithm='differential', max_iter=100, info=True, find_max=False,
@@ -227,25 +238,45 @@ class CustomAutoMLAlgorithm:
             self.mean_fit = []
             self.best_fit = []
 
-            if find_max:
-                bst = np.argsort(-self.custom_initial_population.fitness)[0:self.gen_size]
+            if self.best_sigma is not None:
+                if find_max:
+                    bst = np.argsort(-self.custom_initial_population.fitness)[0]
+                else:
+                    bst = np.argsort(self.custom_initial_population.fitness)[0]
+
+                target = np.copy(self.custom_initial_population.init_pop[bst])
+
+                self.gen = self._create_pop_target(target, self.gen_size, self.best_sigma, self.total_bound)
+                self.gen[0] = target
+                if algorithm != 'differential':
+                    init_sigma = np.empty(shape=(self.gen_size, self.num_variables))
+                    for i in range(0, self.num_variables):
+                        init_sigma[:, i] = np.random.uniform(0.01 * self.total_bound[i],
+                                                             0.5*self.best_sigma * self.total_bound[i], self.gen_size)
+                    self.sigma = np.copy(init_sigma)
+                fitness = self.fitness_function(self.gen)
+
             else:
-                bst = np.argsort(self.custom_initial_population.fitness)[0:self.gen_size]
+                if find_max:
+                    bst = np.argsort(-self.custom_initial_population.fitness)[0:self.gen_size]
+                else:
+                    bst = np.argsort(self.custom_initial_population.fitness)[0:self.gen_size]
 
-            self.gen = np.copy(self.custom_initial_population.init_pop[bst])
+                self.gen = np.copy(self.custom_initial_population.init_pop[bst])
 
-            if algorithm != 'differential':
-                init_sigma = np.empty(shape=(self.gen_size, self.num_variables))
-                for i in range(0, self.num_variables):
-                    init_sigma[:, i] = np.random.uniform(0.01 * self.total_bound[i],
-                                                         0.2 * self.total_bound[i], self.gen_size)
-                self.sigma = np.copy(init_sigma)
-            fitness = np.copy(self.custom_initial_population.fitness[bst])
+                if algorithm != 'differential':
+                    init_sigma = np.empty(shape=(self.gen_size, self.num_variables))
+                    for i in range(0, self.num_variables):
+                        init_sigma[:, i] = np.random.uniform(0.01 * self.total_bound[i],
+                                                             0.2 * self.total_bound[i], self.gen_size)
+                    self.sigma = np.copy(init_sigma)
+                fitness = np.copy(self.custom_initial_population.fitness[bst])
         else:
+
             fitness = self.fitness_function(self.gen)
 
         n, c = np.shape(self.gen)
-        for k in range(0, max_iter):
+        for k in range(self.start_iter, self.start_iter+max_iter):
             fit_mean = np.mean(fitness)
             if find_max:
                 fit_best = np.max(fitness)
@@ -323,6 +354,7 @@ class CustomAutoMLAlgorithm:
             self.best_individual = self.gen[np.argmax(fitness)]
         else:
             self.best_individual = self.gen[np.argmin(fitness)]
+        self.start_iter += max_iter
 
     def plot(self, starting_gen=0):
         """Plots the best and mean fitness values after the evolution process.
@@ -342,3 +374,102 @@ class CustomAutoMLAlgorithm:
         plt.legend()
         plt.show()
 
+
+from sklearn.datasets import load_boston
+from sklearn.model_selection import KFold
+import pandas as pd
+import numpy as np
+boston = load_boston()
+# number of observations
+n = len(boston.data)
+
+# create indices
+ind = np.asarray(range(0, n))
+
+# shuffle
+np.random.shuffle(ind)
+
+x = pd.DataFrame(boston.data, columns = boston.feature_names)
+y = np.asarray(boston['target'])
+
+# convert to numpy array
+x = np.asarray(x)
+x = x[ind]
+# scale between 0 and 1
+mx = np.max(x, axis=0)
+mn = np.min(x, axis=0)
+x = (x-mn)/(mx-mn)
+
+# scale between 0 and 1
+mx = np.max(y, axis=0)
+mn = np.min(y, axis=0)
+y = (y-mn)/(mx-mn)
+y = y[ind]
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import r2_score
+
+def create_model(individual):
+    # create model
+    if individual[0] <= 0.5:
+        bootstrap = True
+    else:
+        bootstrap = False
+
+    if individual[1] > 100:
+        max_depth = None
+    else:
+        max_depth = int(np.round(individual[1], 0))
+
+    if individual[2] <= 0.5:
+        max_features = 'auto'
+    else:
+        max_features = 'sqrt'
+
+    min_samples_leaf = int(np.round(individual[3], 0))
+    min_samples_split = int(np.round(individual[4], 0))
+    n_estimators = int(np.round(individual[5], 0))
+
+    forest = RandomForestRegressor(bootstrap=bootstrap, max_depth=max_depth, max_features=max_features,
+                                   min_samples_leaf=min_samples_leaf, min_samples_split=min_samples_split,
+                                   n_estimators=n_estimators)
+    return forest
+
+
+def fitness_function(population, init_pop_print=False):
+    fits = []
+
+    for individual in population:  # for each individual in population
+
+        forest = create_model(individual)
+
+        # test model using 3 splits
+
+        forest.fit(x[0:int(0.5*n)], y[0:int(0.5*n)])
+        fits.append(r2_score(y[int(0.5*n):], forest.predict(x[int(0.5*n):])))
+
+        if init_pop_print:
+            msg = 'Best: {}, Median: {}, Worst: {}'.format(np.max(fits), np.median(fits), np.min(fits))
+            print(msg)
+
+    return np.asarray(fits)
+
+
+upper_bound = [1, 110, 1, 4, 10, 2000]
+lower_bound = [0, 10, 0, 1, 2, 200]
+
+init_size = 5
+gen_size = 3
+
+init_pop = CustomInitialPopulation(upper_bound=upper_bound, lower_bound=lower_bound, init_size=init_size)
+
+init_pop.fit(fitness_function=fitness_function)
+
+print("")
+algorithm = CustomAutoMLAlgorithm(fitness_function=fitness_function, gen_size=gen_size, custom_initial_population=init_pop)
+
+algorithm.evolve(max_iter=2, find_max=True, algorithm='differential')
+
+algorithm = CustomAutoMLAlgorithm(fitness_function=fitness_function, gen_size=gen_size,
+                                  custom_initial_population=init_pop, best_sigma=0.2)
+print("")
+algorithm.evolve(max_iter=2, find_max=True, algorithm='differential')

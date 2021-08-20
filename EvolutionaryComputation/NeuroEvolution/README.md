@@ -34,3 +34,7 @@ have great success at real-world applications. There exist two main classes: `Ne
 For reinforcement learning, there exist two algorithms: `self-adaptive` and `speciation`. The `self-adaptive` algorithm 
 evolves the weights of the network with static activation functions while `speciation` allows for the algorithm to evolve 
 the activations functions for each layer.
+
+`NeuroReinforcerImages` is not built off keras, unlike the automated machine learning algorithm: `NetworkArchitectureEvolution`.
+Instead, `NeuroReinforcerImages` is built off an advanced CPU convolution library called `CNNumpy`,
+developed by `3outellie`: [link to repository](https://github.com/3outeille/CNNumpy).

@@ -51,11 +51,12 @@ class NeuroReinforcer(NeuroBase):
             activation_function = ['relu', 'tanh', 'sigmoid', 'gaussian', 'leaky_relu', 'selu']
         self.species_layers = activation_function
         self._fit = None
+        self.species_present = []
         super().__init__(layer_nodes=layer_nodes, num_input=num_input, num_output=num_output,
                          activation_function=activation_function, output_activation=output_activation,
                          error_function=fitness_function, population_size=population_size, reinforcement=True)
 
-    def plot(self, starting_gen=0):
+    def plot(self, starting_gen=0, plot_species=False):
         """Plots the best and mean fitness values after the evolution process.
 
         Parameters
@@ -64,9 +65,29 @@ class NeuroReinforcer(NeuroBase):
         starting_gen : int
                       The starting index for plotting.
         """
-        super().plot(self.mean_fit, self.best_fit, None, starting_gen=starting_gen)
 
-    def evolve(self, max_epoch, verbose=True, warm_start=False, algorithm='speciation', just_layers=False):
+        if plot_species:
+            x = range(starting_gen, len(self.mean_fit))
+            species_present = list(self.species_layers[0].keys())
+            for key in species_present:
+                counts = []
+                for layers in self.species_layers:
+                    if key in layers:
+                        counts.append(layers[key])
+                    else:
+                        counts.append(0)
+                plt.plot(x, counts, label=key)
+
+            plt.xlabel("Epochs/Generations")
+            plt.ylabel("Species Size")
+            plt.suptitle("Species Sizes After Evolution")
+            plt.legend()
+            plt.show()
+        else:
+            super().plot(self.mean_fit, self.best_fit, None, starting_gen=starting_gen)
+
+    def evolve(self, max_epoch, verbose=True, warm_start=False, algorithm='speciation', just_layers=False,
+               prob_chnge_species=None):
         """Perform evolution with the given set of parameters
 
         Parameters
@@ -109,9 +130,11 @@ class NeuroReinforcer(NeuroBase):
             species, species_names = self._create_species(self.species_layers)
             gen = self._initialize_networks(self.species_layers, just_layers=just_layers)
             fit = self._error_function(gen)
+            species_layers = []
         else:
             gen = super()._initialize_networks(just_layers=just_layers)
             fit = self._error_function(gen)
+            species_layers = []
 
         if verbose:
             num_param = self.num_input * self.layer_nodes[0] + self.layer_nodes[0]
@@ -123,11 +146,6 @@ class NeuroReinforcer(NeuroBase):
                 print(msg)
 
         for k in range(self.prev_epoch, max_epoch):
-
-            print("Training Model: CPU: {}, RAM: {}, Memory: {}".format(psutil.cpu_percent(),
-                                                                        psutil.virtual_memory().percent,
-                                                                        psutil.Process(
-                                                                            os.getpid()).memory_info().rss / 1024 ** 2))
 
             fit_mean = np.mean(fit)
             fit_best = np.max(fit)
@@ -148,26 +166,82 @@ class NeuroReinforcer(NeuroBase):
             elif algorithm == 'greedy':
                 gen = super()._algorithm_greedy(gen, fit, None, reinforcement=self._error_function)
             elif algorithm == 'speciation':
+
+                species_present = []
+                for i in range(0, len(gen)):
+                    name = ""
+                    for act in gen[i].activation_function_name:
+                        name = name + ',' + act
+                    species_present.append(name[1:])
+                spec_count = []
+                species_present = np.asarray(species_present)
+                for spec in species_names:
+                    spec_count.append(np.count_nonzero(np.where(species_present == spec)))
+
+                species_present = np.where(np.asarray(spec_count) > 0)[0]
+
+                # if reinforce -> check np.argmax in msg
+                msg = '  Number of Species Present: {}\n' \
+                      '    Best Species by Top Fit: {}\n'.format(len(species_present),
+                                                                 gen[np.argmax(fit)].activation_function_name)
+                keys = list(species.keys())
+                present = {}
+                for index in species_present:
+                    msg += "    Species: [{}] Count: {}\n".format(keys[index], spec_count[index])
+                    if just_layers:
+                        present[keys[index]] = spec_count[index]
+                if just_layers:
+                    species_layers.append(present)
                 if verbose:
-                    species_present = []
-                    for i in range(0, len(gen)):
-                        name = ""
-                        for act in gen[i].activation_function_name:
-                            name = name + ',' + act
-                        species_present.append(name[1:])
-                    spec_count = []
-                    species_present = np.asarray(species_present)
-                    for spec in species_names:
-                        spec_count.append(np.count_nonzero(np.where(species_present == spec)))
-                    species_present = np.where(np.asarray(spec_count) > 0)[0]
-                    # if reinforce -> check np.argmax in msg
-                    msg = '  Number of Species Present: {}\n' \
-                          '    Best Species by Top Fit: {}\n'.format(len(species_present),
-                                                                     gen[np.argmax(fit)].activation_function_name)
-                    keys = list(species.keys())
-                    for index in species_present:
-                        msg += "    Species: [{}] Count: {}\n".format(keys[index], spec_count[index])
                     print(msg[:-1])  # skip last '\n'
+
+                if prob_chnge_species is not None:
+                    for i in range(0, len(gen)):
+                        r = np.random.uniform(0, 1, 1)[0]
+                        if r <= prob_chnge_species:
+                            if just_layers:
+                                spec = list(species_layers[0].keys())
+                                v = list(range(0, len(species_layers[0])))
+                            else:
+                                spec = species_names
+                                v = list(range(0, len(species_names)))
+                            cur_idx = spec.index(",".join(gen[i].activation_function_name))
+
+                            v.pop(cur_idx)
+                            r = np.random.choice(v)
+                            index = 0
+                            for j in range(0, len(spec)):
+                                if r == j:
+                                    break
+                                index += 1
+
+                            new_spec = spec[index].split(',')
+                            if verbose:
+                                msg = "     Change from Species {} to Species {}".format(gen[i].activation_function_name, new_spec)
+                                print(msg)
+                            gen[i].activation_function_name = new_spec
+                            gen[i].activation_function = []
+                            for fun in new_spec:
+                                if fun == 'relu':
+                                    gen[i].activation_function.append(relu)
+                                elif fun == 'tanh':
+                                    gen[i].activation_function.append(tanh)
+                                elif fun == 'sigmoid':
+                                    gen[i].activation_function.append(sigmoid)
+                                elif fun == 'unit':
+                                    gen[i].activation_function.append(unit)
+                                elif fun == 'purlin':
+                                    gen[i].activation_function.append(purlin)
+                                elif fun == 'softmax':
+                                    gen[i].activation_function.append(softmax)
+                                elif fun == 'gaussian':
+                                    gen[i].activation_function.append(gaussian)
+                                elif fun == 'elu':
+                                    gen[i].activation_function.append(elu)
+                                elif fun == 'leaky_relu':
+                                    gen[i].activation_function.append(leaky_relu)
+                                elif fun == 'selu':
+                                    gen[i].activation_function.append(selu)
 
                 gen, fit = super()._algorithm_evolutionary_programming(gen, fit, None,
                                                                        reinforcement=self._error_function,
@@ -182,3 +256,4 @@ class NeuroReinforcer(NeuroBase):
         if algorithm == 'speciation':
             self.species = species
             self.species_names = species_names
+            self.species_layers = species_layers
