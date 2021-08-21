@@ -126,6 +126,7 @@ class NeuroReinforcer(NeuroBase):
             species = self.species
             species_names = self.species_names
             fit = self._fit
+            species_layers = self.species_layers
         elif algorithm == 'speciation':
             species, species_names = self._create_species(self.species_layers)
             gen = self._initialize_networks(self.species_layers, just_layers=just_layers)
@@ -169,34 +170,27 @@ class NeuroReinforcer(NeuroBase):
 
                 species_present = []
                 for i in range(0, len(gen)):
-                    name = ""
-                    for act in gen[i].activation_function_name:
-                        name = name + ',' + act
-                    species_present.append(name[1:])
-                spec_count = []
-                species_present = np.asarray(species_present)
-                for spec in species_names:
-                    spec_count.append(np.count_nonzero(np.where(species_present == spec)))
+                    name = ",".join(gen[i].activation_function_name)
+                    species_present.append(name)
 
-                species_present = np.where(np.asarray(spec_count) > 0)[0]
+                species_present, spec_count = np.unique(species_present, return_counts=True)
 
                 # if reinforce -> check np.argmax in msg
                 msg = '  Number of Species Present: {}\n' \
                       '    Best Species by Top Fit: {}\n'.format(len(species_present),
                                                                  gen[np.argmax(fit)].activation_function_name)
-                keys = list(species.keys())
                 present = {}
-                for index in species_present:
-                    msg += "    Species: [{}] Count: {}\n".format(keys[index], spec_count[index])
-                    if just_layers:
-                        present[keys[index]] = spec_count[index]
-                if just_layers:
-                    species_layers.append(present)
+                for i in range(0, len(species_present)):
+                    msg += "    Species: [{}] Count: {}\n".format(species_present[i], spec_count[i])
+                    present[species_present[i]] = spec_count[i]
+                species_layers.append(present)
                 if verbose:
                     print(msg[:-1])  # skip last '\n'
 
                 if prob_chnge_species is not None:
                     for i in range(0, len(gen)):
+                        if species_layers[k][(",".join(gen[i].activation_function_name))] == 1:
+                            continue
                         r = np.random.uniform(0, 1, 1)[0]
                         if r <= prob_chnge_species:
                             if just_layers:

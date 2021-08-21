@@ -561,6 +561,14 @@ class NeuroBase:
                     num_output))
             self.layer_biases.append(np.random.uniform(-limit_w, limit_w, num_output).reshape(1, num_output))
 
+        def product_network(self, inputs, weights, biases):
+            output = np.empty(shape=(weights.shape[1],))
+            t = np.log(inputs * inputs + 0.0000001)
+            for i in range(0, weights.shape[1]):
+                output[i] = np.prod((np.multiply(t,
+                                     weights[:, i]))) + biases[i]
+            return output
+
         def predict(self, x, encode=False, decode=False):  # same as forward pass, performs matrix multiplication of the weights
 
             if encode:
@@ -589,6 +597,19 @@ class NeuroBase:
                     return self.output_activation(output).reshape(len(x), )
                 return self.output_activation(output)
             else:
+                '''
+                output = self.product_network(x, self.layer_weights[0], self.layer_biases[0])
+                for i in range(1, self.layer_count + 1):
+                    if i == self.layer_count:  # last layer so don't use activation function
+                        output = self.product_network(output, self.layer_weights[i], self.layer_biases[i].reshape(-1,))
+                    else:
+                        output = self.activation_function[i](
+                            self.product_network(output, self.layer_weights[i], self.layer_biases[i].reshape(-1,)))
+                if self.num_output == 1:  # if there is only one output variable then reshape
+                    return self.output_activation(output).reshape(len(x), )
+                return self.output_activation(output)
+
+                '''
                 output = self.activation_function[0](np.dot(x, self.layer_weights[0]) + self.layer_biases[0])
                 for i in range(1, self.layer_count + 1):
                     if i == self.layer_count:  # last layer so don't use activation function
@@ -599,6 +620,7 @@ class NeuroBase:
                 if self.num_output == 1:  # if there is only one output variable then reshape
                     return self.output_activation(output).reshape(len(x), )
                 return self.output_activation(output)
+
 
 
 
