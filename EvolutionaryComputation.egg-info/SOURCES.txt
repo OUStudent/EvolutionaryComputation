@@ -3,5 +3,6 @@ setup.py
 EvolutionaryComputation.egg-info/PKG-INFO
 EvolutionaryComputation.egg-info/SOURCES.txt
 EvolutionaryComputation.egg-info/dependency_links.txt
+EvolutionaryComputation.egg-info/img.png
 EvolutionaryComputation.egg-info/requires.txt
 EvolutionaryComputation.egg-info/top_level.txt

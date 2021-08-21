@@ -6,7 +6,7 @@ HERE = pathlib.Path(__file__).parent
 README = (HERE/"README.md").read_text()
 
 setup(name='EvolutionaryComputation',
-      version='0.0.2',
+      version='0.0.4',
       description='Python module containing algorithms in the domain of Evolutionary Computation',
       long_description=README,
       long_description_content_type="text/markdown",

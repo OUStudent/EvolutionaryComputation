@@ -13,6 +13,10 @@ minus `NeuroReinforcerImages`, `OptimizationProblems`, lacks examples and readme
 `CustomAutoMLAlgorithm` from `AutoML`. In addition, documentation is still in progress, please see example notebooks on how
 to use the algorithms, if present in their submodule. 
 
+# GitHub Repository
+
+https://github.com/OUStudent/EvolutionaryComputation
+
 # Installation
 
 ```python
