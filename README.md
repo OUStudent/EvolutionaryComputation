@@ -6,6 +6,13 @@ Evolutionary Computation is a domain of Computational Intelligence, a sub-field 
 where the goal is to model biological evolution in terms as an optimization process. See the section,
 `Quick Overview of Evolutionary Algorithms` below for information. 
 
+# WORK IN PROGRESS
+
+This library is still in heavy construction. As of current, the only modules that are fully functional are `NeuroEvolution`,
+minus `NeuroReinforcerImages`, `OptimizationProblems`, lacks examples and readme, `GeneticAlgorithms`, and only 
+`CustomAutoMLAlgorithm` from `AutoML`. In addition, documentation is still in progress, please see example notebooks on how
+to use the algorithms, if present in their submodule. 
+
 # Installation
 
 ```python
