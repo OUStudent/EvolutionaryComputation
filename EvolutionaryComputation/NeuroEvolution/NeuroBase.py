@@ -112,13 +112,14 @@ class NeuroBase:
 
     def __mutation_lognormal(self, par):
         child = copy.deepcopy(par)
+        #print(par.sigmas)
         for i in range(0, par.layer_count + 1):
             n, c = child.layer_weights[i].shape
-            child.sigmas[i] += np.random.uniform(-0.01 * child.sigmas[i], 0.01 * child.sigmas[i], 1)[0]
-            #tau = 1 / (np.sqrt(2 * np.sqrt(n*c)))
-            #tau_prime = 1 / (np.sqrt(2 * n*c))
-            #r = np.random.normal(0, 1, 2)
-            #child.sigmas[i] = child.sigmas[i] * np.exp(tau * r[0] + tau_prime * r[1])
+            #child.sigmas[i] += np.random.uniform(-0.01 * child.sigmas[i], 0.01 * child.sigmas[i], 1)[0]
+            tau = 1 / (np.sqrt(2 * np.sqrt(n*c)))
+            tau_prime = 1 / (np.sqrt(2 * n*c))
+            r = np.random.normal(0, 1, 2)
+            child.sigmas[i] = child.sigmas[i] * np.exp(tau * r[0] + tau_prime * r[1])
             child.layer_weights[i] += np.random.uniform(-child.sigmas[i], child.sigmas[i], n * c).reshape(n, c)
             if i == par.layer_count:
                 child.layer_biases[i] += np.random.uniform(-child.sigmas[i], child.sigmas[i], 1)
@@ -147,8 +148,8 @@ class NeuroBase:
         ch3 = self.__crossover_2(p1, p2)
         ch4 = self.__crossover_2(p1, p2)
         ch5 = self.__mutation(ch1)
-        ch6 = self.__mutation(ch2)
-        ch7 = self.__mutation(ch3)
+        ch6 = self.__mutation_lognormal(ch2)
+        ch7 = self.__mutation_lognormal(ch3)
         ch8 = self.__mutation(ch4)
         all = [ch1, ch2, ch3, ch4, ch5, ch6, ch7, ch8]
         return all

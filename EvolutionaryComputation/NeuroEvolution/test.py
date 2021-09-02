@@ -8,10 +8,10 @@ from PIL import Image
 
 
 def fitness_function(gen, print_out=False):
-    env = gym.make("LunarLander-v2")
+    env = gym.make("Pong-ram-v0")
     fit = []
     max_game_count = 1
-    max_step = 500
+    max_step = 250
     index = 0
     for ind in gen:
         score = []
@@ -21,8 +21,10 @@ def fitness_function(gen, print_out=False):
             next_state = env.reset()
             for k in range(0, max_step):
                 if print_out:
-                    frames.append(Image.fromarray(env.render(mode='rgb_array')))
+                    #frames.append(Image.fromarray(env.render(mode='rgb_array')))
+                    env.render()
                     print(k)
+                    plt.pause(1/60)
                 action = np.argmax(ind.predict(next_state))
                 next_state, reward, done, info = env.step(action)
                 local_score += reward
@@ -38,15 +40,17 @@ def fitness_function(gen, print_out=False):
         fit.append(score[0])
     return np.asarray(fit)
 
+#model = pickle.load(open("model300", "rb"))
+#fitness_function([model.best_model], print_out=True)
 
-layer_nodes = [50, 100, 50]
-num_input = 8
-num_output = 4
+layer_nodes = [50, 50, 50]
+num_input = 128
+num_output = 6
 fitness_function = fitness_function
 population_size = 50
 output_activation = 'softmax'
-activation_function = ['selu', 'tanh']
-max_epochs = 300
+activation_function = ['selu', 'tanh', 'elu', 'relu', 'gaussian', 'sigmoid']
+max_epochs = 100
 
 model = ne.NeuroReinforcer(layer_nodes=layer_nodes, num_input=num_input, num_output=num_output,
                           fitness_function=fitness_function, population_size=population_size,
@@ -54,7 +58,7 @@ model = ne.NeuroReinforcer(layer_nodes=layer_nodes, num_input=num_input, num_out
                           activation_function=activation_function)
 
 model.evolve(max_epoch=max_epochs, verbose=True, warm_start=False,
-             just_layers=False, algorithm='speciation', prob_chnge_species=0.10)
+             just_layers=True, algorithm='speciation', prob_chnge_species=0.10)
 
 
 
@@ -64,8 +68,9 @@ model.evolve(max_epoch=max_epochs, verbose=True, warm_start=False,
 print(fitness_function([model.best_model]))
 print(fitness_function(model.last_gen))
 print(fitness_function(model.last_gen))
+pickle.dump(model, open("model100", "wb"))
 model.plot()
-model.plot(starting_gen=150)
+model.plot(starting_gen=50)
 model.plot(plot_species=True)
 
-pickle.dump(model, open("model300", "wb"))
+

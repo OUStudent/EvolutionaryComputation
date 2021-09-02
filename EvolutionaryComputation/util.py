@@ -6,9 +6,12 @@ from tensorflow.keras.layers import Conv2D, MaxPooling2D, AveragePooling2D, Drop
 import matplotlib.pyplot as plt
 from mpl_toolkits import mplot3d
 from scipy.spatial.distance import pdist
+import tensorflow as tf
 import sys
 import time
+import pandas as pd
 import copy
+import gc
 import os
 import pickle
 import psutil  # psutil.Process(os.getpid()).memory_info().rss / 1024 ** 2

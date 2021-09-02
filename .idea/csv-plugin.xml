@@ -31,6 +31,34 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\EvolutionaryComputation\AutoML\initial_populations.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\EvolutionaryComputation\AutoML\modules.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\EvolutionaryComputation\AutoML\neural_networck_architecture.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\EvolutionaryComputation\AutoML\test.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\EvolutionaryComputation\GeneticAlgorithms\CustomInitialPopulation.py">
           <value>
             <Attribute>
@@ -39,6 +67,13 @@
           </value>
         </entry>
         <entry key="\EvolutionaryComputation\GeneticAlgorithms\README.md">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\EvolutionaryComputation\GeneticAlgorithms\constrained.py">
           <value>
             <Attribute>
               <option name="separator" value="," />

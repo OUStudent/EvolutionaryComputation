@@ -63,7 +63,7 @@ class ConstrainedProblem:
 
         """
 
-    def __init__(self, fitness_function, constraints, upper_bound, lower_bound, gen_size):
+    def __init__(self, fitness_function, constraints, upper_bound, lower_bound, gen_size, min_percent=0.0001):
         self.gen_size = gen_size
         self.fitness_function = fitness_function
         self.constraints = constraints
@@ -79,6 +79,8 @@ class ConstrainedProblem:
         self.sigma = None
         self.best_individual = None
         self.tourn_size = int(0.2 * self.gen_size)
+        self.min_percent = min_percent
+        self.min_bound = min_percent * self.total_bound
 
     def __constraints(self, x):
         g = self.constraints(x)
@@ -123,7 +125,9 @@ class ConstrainedProblem:
         for (parent, strategy) in zip(self.gen, self.sigma):
             r = np.random.normal(0, 1, len(parent))
             child_sigma = strategy * np.exp(tau * r + tau_prime * r)
-
+            for i in range(0, len(child_sigma)):
+                if child_sigma[i] < self.min_bound[i]:
+                    child_sigma[i] = self.min_bound[i]
             # r = np.random.laplace(0, 1, len(parent))
             r = np.random.normal(0, 1, len(parent))
             # r = np.random.standard_cauchy(len(parent))
@@ -148,20 +152,21 @@ class ConstrainedProblem:
         """
         x_range = range(starting_gen, len(self.best_fit))
         if plot_sigmas:
-            mean_sigmas = np.asarray(self.mean_sigmas[starting_gen:,])
-            for i in reversed(range(starting_gen, self.sigma.shape[1])):
-                plt.figure(2 + i)
+            mean_sigmas = np.asarray(self.mean_sigmas[starting_gen:])
+            for i in range(0, self.sigma.shape[1]):
+                plt.figure(i)
                 plt.plot(x_range, mean_sigmas[:, i])
                 plt.xlabel("Generation")
                 plt.ylabel("Strategy Parameter Value")
                 plt.suptitle("Mean Strategy Parameter {}".format(i + 1))
-        plt.figure(1)
-        plt.plot(x_range, self.mean_fit[starting_gen:], label="Mean Fitness")
-        plt.plot(x_range, self.best_fit[starting_gen:], label="Best Fitness")
-        plt.xlabel("Generation")
-        plt.ylabel("Fitness Value")
-        plt.suptitle("Mean and Best Fitness")
-        plt.legend()
+        else:
+            plt.figure(1)
+            plt.plot(x_range, self.mean_fit[starting_gen:], label="Mean Fitness")
+            plt.plot(x_range, self.best_fit[starting_gen:], label="Best Fitness")
+            plt.xlabel("Generation")
+            plt.ylabel("Fitness Value")
+            plt.suptitle("Mean and Best Fitness")
+            plt.legend()
         plt.show()
 
     def evolve(self, max_iter=300, warm_start=False, sigma_bound=None, find_max=False, info=True):
@@ -305,6 +310,4 @@ class ConstrainedProblem:
                   " Best Individual: "
             print(msg)
             print(self.best_individual)
-
-
 
